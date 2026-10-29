@@ -8,7 +8,8 @@ from scipy.optimize import milp, Bounds, LinearConstraint
 
 st.set_page_config(page_title='KARST-FUND',page_icon='💧',layout='wide')
 st.title('💧 KARST-FUND')
-st.caption('Simulasi kebutuhan dana cadangan dan alokasi bantuan air | Prototipe penelitian, BUKAN estimasi anggaran resmi')
+st.caption('Dashboard simulasi pembiayaan kekeringan Gunungkidul | Prototipe penelitian, bukan estimasi anggaran resmi')
+st.info('👋 **Selamat datang!** Dashboard siap digunakan dengan data historis bawaan. Atur parameter di sidebar, lalu jelajahi tab Dana cadangan, Optimisasi dana, dan Validasi target. **Tidak perlu mengunggah file.**')
 
 POP_K={'Panggang':29.22,'Purwosari':20.87,'Paliyan':32.27,'Saptosari':38.60,'Tepus':35.31,'Tanjungsari':28.41,'Rongkop':28.78,'Girisubo':24.64,'Semanu':59.03,'Ponjong':54.93,'Karangmojo':56.25,'Wonosari':87.79,'Playen':60.91,'Patuk':34.52,'Gedangsari':38.67,'Nglipar':32.79,'Ngawen':34.23,'Semin':55.98}
 REGIONS=list(POP_K)
@@ -91,7 +92,12 @@ def coverage_summary(need, served, trips, trip_cost, budget):
 
 with st.sidebar:
     st.header('⚙️ Parameter simulasi')
-    uploaded=st.file_uploader('Excel analisis kekeringan (sheet Data_Bulanan_SPI dan Episode_Kekeringan)',type=['xlsx'])
+    st.success('📊 **Dataset aktif: CHIRPS Gunungkidul 2000–2025**')
+    st.caption('Data analisis SPI-3 dan episode kekeringan sudah tersedia secara otomatis.')
+    with st.expander('📁 Pengaturan lanjutan: ganti dataset (opsional)', expanded=False):
+        st.caption('Hanya diperlukan jika ingin menggunakan data sendiri. Excel wajib memuat sheet Data_Bulanan_SPI dan Episode_Kekeringan.')
+        uploaded=st.file_uploader('Unggah Excel pengganti',type=['xlsx'])
+    st.divider()
     n_sim=st.select_slider('Jumlah simulasi',options=[1000,3000,5000,10000],value=5000)
     seed=st.number_input('Random seed',min_value=1,value=2026)
     q=st.number_input('Liter/orang/hari (asumsi)',5.,50.,15.,1.)
@@ -158,11 +164,12 @@ if uploaded is None and not DEFAULT_DATA.exists():
     st.info('📁 Unggah Excel analisis kekeringan di sidebar untuk mengaktifkan dashboard.')
     st.stop()
 if uploaded is None:
-    st.sidebar.success('Menggunakan data historis bawaan (CHIRPS 2000–2025).')
-    st.caption('📁 Data historis bawaan aktif. Unggah Excel di sidebar untuk menggantinya.')
+    st.caption('✅ **Data historis bawaan aktif.** Kamu dapat langsung menggunakan semua fitur dashboard.')
 try:
     raw_data = uploaded.getvalue() if uploaded is not None else DEFAULT_DATA.read_bytes()
     monthly, episodes=read_historical(raw_data)
+    if uploaded is not None:
+        st.caption('📁 **Dataset unggahan aktif.** Hasil simulasi menggunakan file pengganti yang diunggah.')
     lengths=pd.to_numeric(episodes['Durasi_Bulan'],errors='coerce').dropna()
     lengths=lengths[lengths>0]
     if len(lengths)<3:st.error('Sheet episode harus memuat minimal tiga durasi valid.');st.stop()
